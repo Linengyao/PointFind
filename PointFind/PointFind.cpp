@@ -2,10 +2,54 @@
 //
 
 #include <iostream>
-
+#include <opencv.hpp>
+using namespace cv;
+using namespace std;
 int main()
 {
-    std::cout << "Hello World!\n";
+	cv::Mat srcMat = imread("E:\\课程\\数字图像处理\\图片5.jpg", 0);
+	cv::Mat BinaryMat;
+	cv::Mat OpenMat;
+	cv::Mat statsMat;
+	cv::Mat labelMat;
+	cv::Mat centrMat;
+	cv::Mat ResultMat;
+	//二值化
+	threshold(srcMat, BinaryMat, 110, 255, THRESH_BINARY_INV);
+	
+	Mat element = getStructuringElement(MORPH_ELLIPSE, Size(10, 10));		
+	morphologyEx(BinaryMat, OpenMat, MORPH_OPEN, element); //开运算
+
+	OpenMat.copyTo(ResultMat);
+
+   //连通域标记
+	int nComp = connectedComponentsWithStats(OpenMat,
+											labelMat,
+											statsMat,
+		centrMat,
+		8,
+		CV_32S);
+	//绘制bounding box
+	for (int i = 1; i < nComp; i++)
+	{
+		Rect bndbox;
+		//bounding box左上角坐标
+		bndbox.x = statsMat.at<int>(i, 0);
+		bndbox.y = statsMat.at<int>(i, 1);
+
+		bndbox.width = statsMat.at<int>(i, 2);
+		bndbox.height = statsMat.at<int>(i, 3);
+
+		//绘制
+		rectangle(ResultMat, bndbox, CV_RGB(255, 255, 255), 1, 8, 0);
+	}
+	imshow("bMat", BinaryMat);
+	imshow("OpenMat", OpenMat);
+	imshow("resultMat", ResultMat);
+	cout << "共有" << nComp - 1 << "个点" << endl;
+	waitKey(0);
+	return 0;
+    //std::cout << "Hello World!\n";
 }
 
 // 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单
